@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">MuveAssigment</string>
+
+    <!--Splash Screen-->
+    <string name="splash_head">Muve Assignment</string>
+
+    <!--Map API Key-->
+    <string name="map_key">AIzaSyCIzk2D1UJW3XlLioC-q5oci8GfSuSaAuI</string>
+
+    <!--Booking Screen-->
+    <string name="booking_book_now">BOOK A RIDE</string>
+    <string name="booking_book_schedule">SCHEDULE</string>
+    <string name="booking_hint_to">To</string>
+    <string name="booking_hint_from">From</string>
+    <string name="booking_mini">Mini</string>
+    <string name="booking_classic">Classic</string>
+    <string name="booking_grand">Grand</string>
+    <string name="booking_plus">Plus</string>
+
+    <string name="pickup_time">Pick-up Time</string>
+    <string name="pickup_time_text">2 Min</string>
+
+    <string name="fare_esti">Fare Estimation</string>
+    <string name="fare_esti_text">$84.63 - 114.49</string>
+
+    <string name="capacity">Capacity</string>
+    <string name="capacity_text">1 4 pax.</string>
+</resources>

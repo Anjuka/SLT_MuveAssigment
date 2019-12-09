@@ -1,0 +1,7 @@
+<resources>
+
+    <!--Location select Utilities -->
+    <dimen name="address_sbox_corner_raidus">10dp</dimen>
+    <dimen name="common_bottom_margin">10dp</dimen>
+
+</resources>
