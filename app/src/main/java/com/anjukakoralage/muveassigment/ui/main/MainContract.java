@@ -8,13 +8,13 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
- * Created by  on 09,December,2019
+ * Created by Anjuka Koralage  on 07,December,2019
  */
 public interface MainContract {
 
     interface view {
 
-       void hideKeyBoard();
+        void hideKeyBoard();
 
     }
 

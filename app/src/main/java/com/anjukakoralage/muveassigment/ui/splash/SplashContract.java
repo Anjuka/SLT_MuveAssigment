@@ -7,7 +7,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
- * Created by  on 09,December,2019
+ * Created by Anjuka Koralage  on 07,December,2019
  */
 public interface SplashContract {
 

@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Created by  on 09,December,2019
+ * Created by Anjuka Koralage  on 07,December,2019
  */
 public class MainPrecenter implements MainContract.presenter {
 
@@ -63,7 +63,7 @@ public class MainPrecenter implements MainContract.presenter {
         }
     }
 
-    public void setMarkerDeviceLocation(LatLng latLng, GoogleMap map){
+    public void setMarkerDeviceLocation(LatLng latLng, GoogleMap map) {
         MarkerOptions options = new MarkerOptions()
                 .position(latLng)
                 .icon(bitmapDescriptorFromVector(mContext, R.drawable.ic_radio_button_checked_black_24dp));
@@ -79,7 +79,7 @@ public class MainPrecenter implements MainContract.presenter {
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
-    public void moveCamera (LatLng latLng,float zoom, String title, GoogleMap mMap){
+    public void moveCamera(LatLng latLng, float zoom, String title, GoogleMap mMap) {
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
         if (!title.equals("My Location")) {

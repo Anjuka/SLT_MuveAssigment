@@ -27,11 +27,11 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
 
-        <activity android:name=".ui.splash.SplashActivity"
+        <activity
+            android:name=".ui.splash.SplashActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="stateAlwaysHidden"
-            >
+            android:windowSoftInputMode="stateAlwaysHidden">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -54,7 +54,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value= "AIzaSyCIzk2D1UJW3XlLioC-q5oci8GfSuSaAuI"/>
+            android:value="AIzaSyCIzk2D1UJW3XlLioC-q5oci8GfSuSaAuI" />
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -64,13 +64,15 @@
         <service
             android:name=".services.JobServiceCustom"
             android:permission="android.permission.BIND_JOB_SERVICE"></service>
+
         <receiver android:name="MyStartServiceReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".utils.CPBroadcastReceiver"
+        <receiver
+            android:name=".utils.CPBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -78,7 +80,6 @@
             </intent-filter>
         </receiver>
     </application>
-
 
 
 </manifest>

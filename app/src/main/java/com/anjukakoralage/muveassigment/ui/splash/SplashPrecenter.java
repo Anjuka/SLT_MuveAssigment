@@ -8,7 +8,7 @@ import android.os.Handler;
 import com.anjukakoralage.muveassigment.ui.main.MainActivity;
 
 /**
- * Created by  on 09,December,2019
+ * Created by Anjuka Koralage  on 07,December,2019
  */
 public class SplashPrecenter implements SplashContract.presenter {
 

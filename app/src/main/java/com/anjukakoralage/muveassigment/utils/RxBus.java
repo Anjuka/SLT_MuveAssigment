@@ -6,7 +6,7 @@ import io.reactivex.Observable;
 
 /**
  * An RxJava event bus implementation.
- * Created by Ihor Havryliuk on 24.11.2018.
+ * Created by Anjuka Koralage on 08,December,2019
  */
 
 public class RxBus {

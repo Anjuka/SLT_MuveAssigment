@@ -8,6 +8,9 @@ import android.os.Bundle;
 import com.anjukakoralage.muveassigment.R;
 import com.anjukakoralage.muveassigment.ui.main.MainActivity;
 
+/**
+ * Created by Anjuka Koralage  on 07,December,2019
+ */
 public class SplashActivity extends AppCompatActivity implements SplashContract.view {
 
     SplashContract.presenter splashPreceneter;

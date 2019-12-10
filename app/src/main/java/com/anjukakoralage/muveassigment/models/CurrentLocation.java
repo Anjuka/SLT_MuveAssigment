@@ -3,7 +3,7 @@ package com.anjukakoralage.muveassigment.models;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
- * Created by  on 10,December,2019
+ * Created by Anjuka Koralage on 10,December,2019
  */
 public class CurrentLocation {
 

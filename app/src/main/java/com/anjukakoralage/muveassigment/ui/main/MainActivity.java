@@ -7,6 +7,7 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -44,6 +45,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
@@ -57,6 +59,10 @@ import java.util.List;
 import io.reactivex.disposables.CompositeDisposable;
 
 import static java.security.AccessController.getContext;
+
+/**
+ * Created by Anjuka Koralage  on 07,December,2019
+ */
 
 public class MainActivity extends AppCompatActivity implements MainContract.view, OnMapReadyCallback, View.OnClickListener, CPBroadcastReceiver.ConnectivityReceiverListener, TextView.OnEditorActionListener {
 
@@ -93,6 +99,18 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         Log.d(TAG, "onMapReady: map is ready");
         mMap = googleMap;
 
+        try {
+            //add style to map
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.map_style));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
         if (mLocationPermissionsGranted) {
             getDeviceLocation();
 

@@ -12,7 +12,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 /**
- * Created by  on 10,December,2019
+ * Created by Anjuka Koralage on 09,December,2019
  */
 public class JobServiceCustom extends android.app.job.JobService {
 
@@ -30,7 +30,7 @@ public class JobServiceCustom extends android.app.job.JobService {
             @Override
             public void onSuccess(Location location) {
                 //save latlng in firebase database
-                //DBHelper.firebasaeHelper(new LatLng(location.getLongitude(), location.getLongitude()));
+                DBHelper.firebasaeHelper(new LatLng(location.getLongitude(), location.getLongitude()));
             }
         });
         return true;
