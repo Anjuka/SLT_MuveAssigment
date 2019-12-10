@@ -15,6 +15,8 @@
         android:smallScreens="true"
         android:xlargeScreens="true" />
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".AppController"
         android:allowBackup="true"
@@ -58,6 +60,11 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+
+        <service
+            android:name=".CurrentLocationJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
     </application>
 

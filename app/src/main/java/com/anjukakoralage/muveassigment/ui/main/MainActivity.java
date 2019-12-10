@@ -1,14 +1,17 @@
 package com.anjukakoralage.muveassigment.ui.main;
 
 import android.Manifest;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.app.job.JobService;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -25,24 +28,24 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.anjukakoralage.muveassigment.CurrentLocationJobService;
 import com.anjukakoralage.muveassigment.R;
+import com.anjukakoralage.muveassigment.utils.RxBus;
+import com.firebase.jobdispatcher.Job;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+
+import io.reactivex.disposables.CompositeDisposable;
 
 public class MainActivity extends AppCompatActivity implements MainContract.view, OnMapReadyCallback, View.OnClickListener {
 
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
     private FusedLocationProviderClient fusedLocationProviderClient;
     private static final float DEFAULT_ZOOM = 15f;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private ConstraintLayout constraintLayout;
 
 
     private EditText mSearchText, mCurrentText;
@@ -63,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
     private Boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
+    RxBus bus;
+    Context mContext;
+    private final CompositeDisposable disposable = new CompositeDisposable();
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -90,13 +97,23 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mainPresenter = new MainPrecenter(this);
+        scheduleJob();
+
+        constraintLayout = findViewById(R.id.mainView);
+
+        bus = new RxBus();
+        mContext = getApplicationContext();
+
+        mainPresenter = new MainPrecenter(this, bus, mContext);
 
         mCurrentText = (EditText) findViewById(R.id.edt_pickup_location_address);
         mSearchText = (EditText) findViewById(R.id.edt_drop_location_address);
         mGps = (ImageView) findViewById(R.id.ic_gps);
 
+        mGps.setOnClickListener(this);
+
         getLocationPermission();
+
     }
 
     private void init() {
@@ -110,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
                         || keyEvent.getAction() == KeyEvent.ACTION_DOWN
                         || keyEvent.getAction() == KeyEvent.KEYCODE_ENTER) {
 
-                    //execute our method for searching
+                    //execute searching method
                     geoLocate();
                 }
 
@@ -118,15 +135,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
             }
         });
 
-        mGps.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "onClick: clicked gps icon");
-                getDeviceLocation();
-            }
-        });
-
-        hideSoftKeyboard();
+        hideKeyBoard();
     }
         private void geoLocate () {
             Log.d(TAG, "geoLocate: geolocating");
@@ -147,8 +156,8 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
                 Log.d(TAG, "geoLocate: found a location: " + address.toString());
                 //Toast.makeText(this, address.toString(), Toast.LENGTH_SHORT).show();
 
-                moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM,
-                        address.getAddressLine(0));
+                mainPresenter.moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM,
+                        address.getAddressLine(0),mMap);
             }
         }
 
@@ -170,12 +179,12 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
                                 double latitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).latitude);
                                 double longitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).longitude);
 
-                                moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
+                                mainPresenter.moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
                                         16,
-                                        "My Location");
+                                        "My Location", mMap);
 
-                                getAddress(latitude, longitude);
-                                setMarkerDeviceLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
+                                mainPresenter.getAddress(latitude, longitude,mCurrentText);
+                                mainPresenter.setMarkerDeviceLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), mMap);
 
                             } else {
                                 Log.d(TAG, "onComplete: current location is null");
@@ -189,20 +198,6 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
             }
         }
 
-        private void moveCamera (LatLng latLng,float zoom, String title){
-            Log.d(TAG, "moveCamera: moving the camera to: lat: " + latLng.latitude + ", lng: " + latLng.longitude);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-
-            if (!title.equals("My Location")) {
-                MarkerOptions options = new MarkerOptions()
-                        .position(latLng)
-                        .title(title);
-                mMap.addMarker(options);
-            }
-
-            hideSoftKeyboard();
-        }
-
     private void initMap(){
         Log.d(TAG, "initMap: initializing map");
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -210,6 +205,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
     }
 
     private void getLocationPermission(){
+
         Log.d(TAG, "getLocationPermission: getting location permissions");
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -256,50 +252,44 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         }
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.ic_gps:
+                getDeviceLocation();
 
-        private void hideSoftKeyboard(){
-            this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         }
-
-    public void getAddress(double lat, double lng) {
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        try {
-            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
-            Address obj = addresses.get(0);
-            String add = obj.getAddressLine(0);
-            add = add + "\n" + obj.getAdminArea();
-            add = add + "\n" + obj.getSubAdminArea();
-            add = add + "\n" + obj.getLocality();
-            add = add + "\n" + obj.getSubThoroughfare();
-
-            Log.v("IGA", "Address" + add);
-
-            mCurrentText.setText(add);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void setMarkerDeviceLocation(LatLng latLng){
-        MarkerOptions options = new MarkerOptions()
-                .position(latLng)
-                .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_radio_button_checked_black_24dp));
-        mMap.addMarker(options);
-    }
-
-    private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
-        Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
-        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        vectorDrawable.draw(canvas);
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
     @Override
-    public void onClick(View v) {
+    public void hideKeyBoard() {
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    public void scheduleJob(){
+        ComponentName componentName = new ComponentName(this, CurrentLocationJobService.class);
+        JobInfo info = new JobInfo.Builder(123, componentName)
+                .setRequiresCharging(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setRequiresDeviceIdle(true)
+                .setRequiresCharging(true)
+                .setPeriodic(5 * 1000)
+                .build();
+
+        JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        int resultCode = scheduler.schedule(info);
+        if (resultCode == JobScheduler.RESULT_SUCCESS) {
+            Log.d(TAG, "Job scheduled");
+        } else {
+            Log.d(TAG, "Job scheduling failed");
+        }
+    }
+
+    public void cancellJob(){
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        jobScheduler.cancel(123);
+        Log.d(TAG, "cancellJob: Job Cancelled");
 
     }
 }
