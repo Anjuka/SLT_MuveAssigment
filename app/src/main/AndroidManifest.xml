@@ -15,8 +15,6 @@
         android:smallScreens="true"
         android:xlargeScreens="true" />
 
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
     <application
         android:name=".AppController"
         android:allowBackup="true"
@@ -63,9 +61,13 @@
 
 
         <service
-            android:name=".CurrentLocationJobService"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
-
+            android:name=".services.JobServiceCustom"
+            android:permission="android.permission.BIND_JOB_SERVICE"></service>
+        <receiver android:name="MyStartServiceReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 

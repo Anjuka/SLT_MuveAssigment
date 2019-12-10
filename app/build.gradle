@@ -11,7 +11,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.anjukakoralage.muveassigment"
-        minSdkVersion 22
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode versionMajor * 10**4 + versionMinor * 10**3 + versionPatch * 10**2 + versionBuild
         versionName "${versionMajor}.${versionMinor}.${versionPatch}.${versionBuild}"
