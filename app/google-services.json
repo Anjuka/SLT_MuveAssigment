@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "366062519453",
+    "firebase_url": "https://muveassigment-c2bc6.firebaseio.com",
+    "project_id": "muveassigment-c2bc6",
+    "storage_bucket": "muveassigment-c2bc6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366062519453:android:0d786f230cbede77088074",
+        "android_client_info": {
+          "package_name": "com.anjukakoralage.muveassigment"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "366062519453-86u2bj2vvnckg3hsjik5e45cptg2cqrc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anjukakoralage.muveassigment",
+            "certificate_hash": "c9d2b460127f4e77e39b0112778679351d7ff064"
+          }
+        },
+        {
+          "client_id": "366062519453-qs42esj7tse3g3g1ah2n1tf7od3nv6g1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByNH_DYNbRwva40rXca2Q0kwMsl4P4H8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "366062519453-qs42esj7tse3g3g1ah2n1tf7od3nv6g1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

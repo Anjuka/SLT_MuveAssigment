@@ -30,6 +30,7 @@ import androidx.annotation.NonNull;
 
 import com.anjukakoralage.muveassigment.CurrentLocationJobService;
 import com.anjukakoralage.muveassigment.R;
+import com.anjukakoralage.muveassigment.models.CurrentLocation;
 import com.anjukakoralage.muveassigment.utils.RxBus;
 import com.firebase.jobdispatcher.Job;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -40,6 +41,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import org.checkerframework.checker.units.qual.C;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,6 +64,11 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
     private static final float DEFAULT_ZOOM = 15f;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private ConstraintLayout constraintLayout;
+    private double  latitude;
+    double longitude;
+    LatLng deviceLocation;
+
+    DatabaseReference databaseReference;
 
 
     private EditText mSearchText, mCurrentText;
@@ -99,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
 
         scheduleJob();
 
+        databaseReference = FirebaseDatabase.getInstance().getReference("CurrentLocation");
         constraintLayout = findViewById(R.id.mainView);
 
         bus = new RxBus();
@@ -176,8 +187,8 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
                             if (task.isSuccessful()) {
                                 Log.d(TAG, "onComplete: found location!");
                                 Location currentLocation = (Location) task.getResult();
-                                double latitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).latitude);
-                                double longitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).longitude);
+                                 latitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).latitude);
+                                 longitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).longitude);
 
                                 mainPresenter.moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
                                         16,
@@ -185,6 +196,8 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
 
                                 mainPresenter.getAddress(latitude, longitude,mCurrentText);
                                 mainPresenter.setMarkerDeviceLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), mMap);
+                                deviceLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                                saveCurrentLocation();
 
                             } else {
                                 Log.d(TAG, "onComplete: current location is null");
@@ -268,16 +281,18 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
 
     public void scheduleJob(){
         ComponentName componentName = new ComponentName(this, CurrentLocationJobService.class);
-        JobInfo info = new JobInfo.Builder(123, componentName)
-                .setRequiresCharging(true)
+        JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        JobInfo.Builder builder = new JobInfo.Builder(123, componentName)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresDeviceIdle(true)
                 .setRequiresCharging(true)
-                .setPeriodic(5 * 1000)
-                .build();
+                .setPeriodic(2 * 1000);
 
-        JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-        int resultCode = scheduler.schedule(info);
+        JobInfo jobInfo = builder.build();
+        scheduler.schedule(jobInfo);
+
+
+        int resultCode = scheduler.schedule(jobInfo);
         if (resultCode == JobScheduler.RESULT_SUCCESS) {
             Log.d(TAG, "Job scheduled");
         } else {
@@ -290,6 +305,15 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
         jobScheduler.cancel(123);
         Log.d(TAG, "cancellJob: Job Cancelled");
+
+    }
+
+    public void saveCurrentLocation(){
+
+       String id = databaseReference.push().getKey();
+       String address = mCurrentText.getText().toString();
+       CurrentLocation currentLocation = new CurrentLocation(address,deviceLocation);
+       databaseReference.child(id).setValue(currentLocation);
 
     }
 }

@@ -26,6 +26,7 @@ public class CurrentLocationJobService extends JobService {
             public void run() {
                 for (int i = 0; i < 10; i++) {
                     Log.d(TAG, "run: " + i);
+
                     if (jobCancelled) {
                         return;
                     }
@@ -46,7 +47,7 @@ public class CurrentLocationJobService extends JobService {
     @Override
     public boolean onStopJob(JobParameters params) {
         Log.d(TAG, "Job cancelled before completion");
-        jobCancelled = true;
+        //jobCancelled = true;
         return true;
     }
 }
