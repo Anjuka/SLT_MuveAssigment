@@ -12,6 +12,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,16 +24,20 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.anjukakoralage.muveassigment.AppController;
 import com.anjukakoralage.muveassigment.R;
 import com.anjukakoralage.muveassigment.data.remote.DBHelper;
 import com.anjukakoralage.muveassigment.models.CurrentLocation;
+import com.anjukakoralage.muveassigment.utils.CPBroadcastReceiver;
 import com.anjukakoralage.muveassigment.utils.JobSchedulerUtils;
 import com.anjukakoralage.muveassigment.utils.RxBus;
+import com.anjukakoralage.muveassigment.utils.Utils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
@@ -51,7 +56,9 @@ import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
 
-public class MainActivity extends AppCompatActivity implements MainContract.view, OnMapReadyCallback, View.OnClickListener {
+import static java.security.AccessController.getContext;
+
+public class MainActivity extends AppCompatActivity implements MainContract.view, OnMapReadyCallback, View.OnClickListener, CPBroadcastReceiver.ConnectivityReceiverListener, TextView.OnEditorActionListener {
 
     MainContract.presenter mainPresenter;
 
@@ -63,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
     private static final float DEFAULT_ZOOM = 15f;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private ConstraintLayout constraintLayout;
-    private double  latitude;
+    private double latitude;
     double longitude;
     LatLng deviceLocation;
 
@@ -96,7 +103,6 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
             }
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
-
             init();
         }
     }
@@ -119,10 +125,21 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         mGps = (ImageView) findViewById(R.id.ic_gps);
 
         mGps.setOnClickListener(this);
+        mSearchText.setOnEditorActionListener(this);
 
         getLocationPermission();
 
         scheduleJob();
+
+        mSearchText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                Utils.hideSoftKeyboard(getApplicationContext(), getCurrentFocus());
+                return true;
+            }
+            return false;
+        });
+
+
     }
 
     private void init() {
@@ -146,94 +163,95 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
 
         hideKeyBoard();
     }
-        private void geoLocate () {
-            Log.d(TAG, "geoLocate: geolocating");
 
-            String searchString = mSearchText.getText().toString();
+    private void geoLocate() {
+        Log.d(TAG, "geoLocate: geolocating");
 
-            Geocoder geocoder = new Geocoder(MainActivity.this);
-            List<Address> list = new ArrayList<>();
-            try {
-                list = geocoder.getFromLocationName(searchString, 1);
-            } catch (IOException e) {
-                Log.e(TAG, "geoLocate: IOException: " + e.getMessage());
-            }
+        String searchString = mSearchText.getText().toString();
 
-            if (list.size() > 0) {
-                Address address = list.get(0);
-
-                Log.d(TAG, "geoLocate: found a location: " + address.toString());
-                //Toast.makeText(this, address.toString(), Toast.LENGTH_SHORT).show();
-
-                mainPresenter.moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM,
-                        address.getAddressLine(0),mMap);
-            }
+        Geocoder geocoder = new Geocoder(MainActivity.this);
+        List<Address> list = new ArrayList<>();
+        try {
+            list = geocoder.getFromLocationName(searchString, 1);
+        } catch (IOException e) {
+            Log.e(TAG, "geoLocate: IOException: " + e.getMessage());
         }
 
-        private void getDeviceLocation () {
-            Log.d(TAG, "getDeviceLocation: getting the devices current location");
+        if (list.size() > 0) {
+            Address address = list.get(0);
 
-            mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+            Log.d(TAG, "geoLocate: found a location: " + address.toString());
+            //Toast.makeText(this, address.toString(), Toast.LENGTH_SHORT).show();
 
-            try {
-                if (mLocationPermissionsGranted) {
+            mainPresenter.moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM,
+                    address.getAddressLine(0), mMap);
+        }
+    }
 
-                    final Task location = mFusedLocationProviderClient.getLastLocation();
-                    location.addOnCompleteListener(new OnCompleteListener() {
-                        @Override
-                        public void onComplete(@NonNull Task task) {
-                            if (task.isSuccessful()) {
-                                Log.d(TAG, "onComplete: found location!");
-                                Location currentLocation = (Location) task.getResult();
-                                 latitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).latitude);
-                                 longitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).longitude);
+    private void getDeviceLocation() {
+        Log.d(TAG, "getDeviceLocation: getting the devices current location");
 
-                                mainPresenter.moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
-                                        16,
-                                        "My Location", mMap);
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-                                mainPresenter.getAddress(latitude, longitude,mCurrentText);
-                                mainPresenter.setMarkerDeviceLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), mMap);
-                                deviceLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                                //saveCurrentLocation();
-                                //DBHelper.firebasaeHelper(deviceLocation);
+        try {
+            if (mLocationPermissionsGranted) {
 
-                            } else {
-                                Log.d(TAG, "onComplete: current location is null");
-                                Toast.makeText(MainActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
-                            }
+                final Task location = mFusedLocationProviderClient.getLastLocation();
+                location.addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "onComplete: found location!");
+                            Location currentLocation = (Location) task.getResult();
+                            latitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).latitude);
+                            longitude = (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()).longitude);
+
+                            mainPresenter.moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
+                                    16,
+                                    "My Location", mMap);
+
+                            mainPresenter.getAddress(latitude, longitude, mCurrentText);
+                            mainPresenter.setMarkerDeviceLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), mMap);
+                            deviceLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                            //saveCurrentLocation();
+                            //DBHelper.firebasaeHelper(deviceLocation);
+
+                        } else {
+                            Log.d(TAG, "onComplete: current location is null");
+                            Toast.makeText(MainActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
                         }
-                    });
-                }
-            } catch (SecurityException e) {
-                Log.e(TAG, "getDeviceLocation: SecurityException: " + e.getMessage());
+                    }
+                });
             }
+        } catch (SecurityException e) {
+            Log.e(TAG, "getDeviceLocation: SecurityException: " + e.getMessage());
         }
+    }
 
-    private void initMap(){
+    private void initMap() {
         Log.d(TAG, "initMap: initializing map");
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(MainActivity.this);
     }
 
-    private void getLocationPermission(){
+    private void getLocationPermission() {
 
         Log.d(TAG, "getLocationPermission: getting location permissions");
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
 
-        if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mLocationPermissionsGranted = true;
                 initMap();
-            }else{
+            } else {
                 ActivityCompat.requestPermissions(this,
                         permissions,
                         LOCATION_PERMISSION_REQUEST_CODE);
             }
-        }else{
+        } else {
             ActivityCompat.requestPermissions(this,
                     permissions,
                     LOCATION_PERMISSION_REQUEST_CODE);
@@ -264,9 +282,10 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         }
     }
 
+
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.ic_gps:
                 getDeviceLocation();
 
@@ -278,17 +297,38 @@ public class MainActivity extends AppCompatActivity implements MainContract.view
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
-    public void scheduleJob(){
+    public void scheduleJob() {
 
         JobSchedulerUtils.scheduleJob(MainActivity.this);
     }
 
-    /*public void saveCurrentLocation(){
 
-       String id = databaseReference.push().getKey();
-       String address = mCurrentText.getText().toString();
-       CurrentLocation currentLocation = new CurrentLocation(address,deviceLocation);
-       databaseReference.child(id).setValue(currentLocation);
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
 
-    }*/
+    }
+
+    @Override
+    public void onNetworkConnectionChanged(boolean isConnected) {
+        showSnack(isConnected);
+    }
+
+    private void showSnack(boolean isConnected) {
+        String message;
+        if (isConnected) {
+            message = "Connected to internet.";
+        } else {
+            message = "No internet connection.";
+        }
+        Utils.showSnackbar(constraintLayout, message, Snackbar.LENGTH_LONG);
+    }
+
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            Utils.hideSoftKeyboard(getApplicationContext(), v);
+            return true;
+        }
+        return false;
+    }
 }

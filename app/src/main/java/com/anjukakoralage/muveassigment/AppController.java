@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
+import com.anjukakoralage.muveassigment.utils.CPBroadcastReceiver;
 
 /**
  * Created by Anjuka Koralage  on 07,December,2019
@@ -48,7 +49,7 @@ public class AppController extends Application {
         }
     }
 
-    /*public void setConnectivityListener(CPBroadcastReceiver.ConnectivityReceiverListener listener) {
+    public void setConnectivityListener(CPBroadcastReceiver.ConnectivityReceiverListener listener) {
         CPBroadcastReceiver.connectivityReceiverListener = listener;
-    }*/
+    }
 }

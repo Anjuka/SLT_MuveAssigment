@@ -80,7 +80,7 @@ public class MainPrecenter implements MainContract.presenter {
     }
 
     public void moveCamera (LatLng latLng,float zoom, String title, GoogleMap mMap){
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
         if (!title.equals("My Location")) {
             MarkerOptions options = new MarkerOptions()

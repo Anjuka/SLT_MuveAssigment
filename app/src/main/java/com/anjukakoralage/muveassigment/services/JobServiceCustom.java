@@ -29,10 +29,10 @@ public class JobServiceCustom extends android.app.job.JobService {
         client.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
-                DBHelper.firebasaeHelper(new LatLng(location.getLongitude(), location.getLongitude()));
+                //save latlng in firebase database
+                //DBHelper.firebasaeHelper(new LatLng(location.getLongitude(), location.getLongitude()));
             }
         });
-       //
         return true;
     }
 
